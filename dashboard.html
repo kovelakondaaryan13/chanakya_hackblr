@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chanakya ERP — Sarvoday Textiles</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0D1117; color: #C9D1D9; font-family: 'Inter', system-ui, sans-serif; overflow: hidden; height: 100vh; }
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #30363D; border-radius: 3px; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0; width: 220px;
+    background: #161B22; border-right: 1px solid #21262D;
+    display: flex; flex-direction: column; z-index: 200;
+}
+.sidebar-logo { padding: 20px 20px 24px; border-bottom: 1px solid #21262D; }
+.sidebar-logo .brand { font-size: 16px; font-weight: 800; color: #6366F1; }
+.sidebar-logo .sub { font-size: 11px; color: #6B7280; margin-top: 2px; }
+.sidebar-nav { flex: 1; padding: 12px 10px; overflow-y: auto; }
+.nav-item {
+    display: flex; align-items: center; gap: 10px;
+    height: 40px; padding: 0 14px; border-radius: 8px;
+    font-size: 13px; color: #8B949E; cursor: pointer;
+    transition: all 0.15s; margin-bottom: 2px;
+    border-left: 3px solid transparent;
+    user-select: none;
+}
+.nav-item:hover { background: #21262D; color: #C9D1D9; }
+.nav-item.active {
+    background: rgba(99,102,241,0.12); color: #FFFFFF;
+    border-left-color: #6366F1;
+}
+.nav-item .nav-icon { font-size: 15px; width: 22px; text-align: center; flex-shrink: 0; }
+.sidebar-footer {
+    padding: 16px 20px; border-top: 1px solid #21262D;
+    display: flex; align-items: center; gap: 8px;
+}
+.live-dot-sm { width: 6px; height: 6px; border-radius: 50%; background: #10B981; animation: livePulse 2s infinite; }
+@keyframes livePulse { 0%,100%{ box-shadow: 0 0 0 0 rgba(16,185,129,0.4); } 50%{ box-shadow: 0 0 0 5px rgba(16,185,129,0); } }
+@keyframes blink { 0%,100%{ opacity: 1; } 50%{ opacity: 0.4; } }
+.sidebar-footer .ft-text { font-size: 11px; color: #6B7280; }
+.sidebar-footer .ft-text strong { color: #10B981; font-weight: 600; }
+
+/* ── HEADER ── */
+.top-header {
+    position: fixed; top: 0; left: 220px; right: 0; height: 56px;
+    background: #161B22; border-bottom: 1px solid #21262D;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 28px; z-index: 100;
+}
+.hdr-title { font-size: 18px; font-weight: 700; color: #F0F6FC; }
+.hdr-search {
+    background: #0D1117; border: 1px solid #21262D; border-radius: 8px;
+    padding: 8px 16px; width: 340px; font-size: 13px; color: #8B949E;
+    font-family: inherit; outline: none;
+}
+.hdr-search:focus { border-color: #6366F1; }
+.hdr-right { display: flex; align-items: center; gap: 14px; }
+.hdr-badge {
+    font-size: 10px; font-weight: 600; padding: 4px 10px;
+    border-radius: 12px; display: flex; align-items: center; gap: 5px;
+    letter-spacing: 0.3px;
+}
+.hdr-badge.green { background: rgba(16,185,129,0.12); color: #10B981; }
+.hdr-badge.red { background: rgba(220,36,76,0.12); color: #DC244C; }
+.hdr-clock { font-size: 13px; color: #8B949E; font-variant-numeric: tabular-nums; font-weight: 500; }
+
+/* ── MAIN CONTENT ── */
+.main { margin-left: 220px; margin-top: 56px; height: calc(100vh - 56px); overflow-y: auto; padding: 24px 28px; }
+.view { display: none; }
+.view.active { display: block; }
+
+/* ── SHARED CARD ── */
+.card {
+    background: #161B22; border: 1px solid #21262D; border-radius: 12px;
+    padding: 20px;
+}
+.card-title {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #6B7280; margin-bottom: 16px;
+}
+
+/* ── GRID HELPERS ── */
+.row { display: grid; gap: 20px; margin-bottom: 20px; }
+.row-4 { grid-template-columns: repeat(4, 1fr); }
+.row-3 { grid-template-columns: repeat(3, 1fr); }
+.row-2 { grid-template-columns: repeat(2, 1fr); }
+.row-1 { grid-template-columns: 1fr; }
+
+/* ── KPI CARDS ── */
+.kpi { text-align: left; }
+.kpi-label { font-size: 11px; color: #6B7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+.kpi-row { display: flex; align-items: baseline; gap: 10px; }
+.kpi-value { font-size: 28px; font-weight: 800; color: #F0F6FC; }
+.kpi-trend { font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 3px; }
+.kpi-trend.up { color: #10B981; }
+.kpi-trend.down { color: #EF4444; }
+.kpi-trend.neutral { color: #F59E0B; }
+.kpi-sub { font-size: 11px; color: #484F58; margin-top: 6px; }
+
+/* ── DATA TABLE ── */
+.dtable { width: 100%; border-collapse: collapse; }
+.dtable th {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; color: #6B7280; text-align: left;
+    padding: 10px 14px; border-bottom: 1px solid #21262D;
+    background: #0D1117;
+}
+.dtable td {
+    font-size: 13px; padding: 12px 14px;
+    border-bottom: 1px solid #161B22;
+}
+.dtable tbody tr { transition: background 0.15s; }
+.dtable tbody tr:hover { background: #1C2128; }
+.dtable tbody tr:nth-child(even) { background: rgba(13,17,23,0.4); }
+.dtable tbody tr:nth-child(even):hover { background: #1C2128; }
+.dtable tfoot td { font-weight: 700; border-top: 2px solid #21262D; background: #0D1117; color: #F0F6FC; }
+
+/* ── PILLS / BADGES ── */
+.pill {
+    display: inline-block; font-size: 10px; font-weight: 600;
+    padding: 3px 10px; border-radius: 10px; letter-spacing: 0.3px;
+}
+.pill-red { background: rgba(239,68,68,0.12); color: #FCA5A5; }
+.pill-orange { background: rgba(245,158,11,0.12); color: #FBBF24; }
+.pill-yellow { background: rgba(234,179,8,0.12); color: #FDE047; }
+.pill-green { background: rgba(16,185,129,0.12); color: #6EE7B7; }
+.pill-blue { background: rgba(99,102,241,0.12); color: #A5B4FC; }
+.pill-purple { background: rgba(168,85,247,0.12); color: #C4B5FD; }
+.pill-gray { background: rgba(107,114,128,0.12); color: #9CA3AF; }
+
+/* ── BUTTONS ── */
+.btn {
+    font-size: 11px; font-weight: 600; padding: 6px 14px;
+    border-radius: 6px; border: none; cursor: pointer;
+    font-family: inherit; transition: all 0.15s;
+}
+.btn-indigo { background: #6366F1; color: #FFF; }
+.btn-indigo:hover { background: #5457E5; }
+.btn-red { background: rgba(239,68,68,0.15); color: #FCA5A5; border: 1px solid rgba(239,68,68,0.3); }
+.btn-red:hover { background: rgba(239,68,68,0.25); }
+.btn-ghost { background: transparent; color: #8B949E; border: 1px solid #21262D; }
+.btn-ghost:hover { background: #21262D; color: #C9D1D9; }
+.btn-ghost.active { background: rgba(99,102,241,0.12); color: #A5B4FC; border-color: rgba(99,102,241,0.3); }
+
+/* ── KANBAN ── */
+.kanban { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.kanban-col { background: #0D1117; border-radius: 10px; padding: 14px; min-height: 200px; }
+.kanban-col.dispatch-bg { background: rgba(16,185,129,0.04); }
+.kanban-header {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.05em; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+}
+.kanban-dot { width: 8px; height: 8px; border-radius: 50%; }
+.kanban-count { color: #484F58; margin-left: auto; }
+.k-card {
+    background: #161B22; border: 1px solid #21262D; border-radius: 8px;
+    padding: 12px; margin-bottom: 8px; cursor: pointer;
+    transition: all 0.15s; position: relative;
+}
+.k-card:hover { border-color: #30363D; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+.k-client { font-size: 13px; font-weight: 600; color: #F0F6FC; margin-bottom: 4px; }
+.k-meta { font-size: 11px; color: #6B7280; }
+.k-due { font-size: 10px; color: #484F58; margin-top: 4px; }
+.k-priority { position: absolute; top: 8px; right: 8px; }
+
+/* ── PROGRESS BAR ── */
+.pbar { height: 6px; background: #21262D; border-radius: 3px; overflow: hidden; }
+.pbar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+
+/* ── ACTIVITY ── */
+.act-card {
+    display: flex; align-items: flex-start; gap: 14px;
+    padding: 16px; border-radius: 10px; margin-bottom: 10px;
+    border-left: 4px solid transparent; background: #0D1117;
+}
+.act-card.email { border-left-color: #10B981; background: rgba(16,185,129,0.03); }
+.act-card.call { border-left-color: #6366F1; background: rgba(99,102,241,0.03); }
+.act-icon { font-size: 24px; }
+.act-body { flex: 1; }
+.act-action { font-size: 14px; font-weight: 600; color: #F0F6FC; }
+.act-details { font-size: 12px; color: #6B7280; margin-top: 3px; }
+.act-ts { font-size: 11px; color: #484F58; flex-shrink: 0; }
+.act-type-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 6px; margin-left: 8px; }
+
+/* ── QDRANT ── */
+.q-stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+.q-stat {
+    background: rgba(220,36,76,0.05); border: 1px solid rgba(220,36,76,0.2);
+    border-radius: 10px; padding: 16px; text-align: center;
+}
+.q-stat-val { font-size: 22px; font-weight: 800; color: #DC244C; }
+.q-stat-lbl { font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em; color: #6B7280; margin-top: 4px; }
+.q-query-box {
+    background: #0D1117; border: 1px solid #21262D; border-radius: 10px;
+    padding: 16px 20px; margin-bottom: 20px;
+}
+.q-query-label { font-size: 10px; text-transform: uppercase; color: #6B7280; margin-bottom: 6px; letter-spacing: 0.08em; }
+.q-query-text { font-size: 18px; font-weight: 600; color: #6366F1; font-style: italic; }
+.q-query-ts { font-size: 10px; color: #484F58; margin-top: 6px; }
+.q-results { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.q-result-card {
+    background: #0D1117; border: 1px solid #21262D; border-radius: 10px; padding: 16px;
+}
+.q-score-badge {
+    display: inline-block; font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: 8px; margin-bottom: 10px;
+}
+.q-result-text {
+    font-size: 12px; color: #8B949E; line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden; min-height: 36px; margin-bottom: 10px;
+}
+.q-coll-info {
+    background: #0D1117; border: 1px solid #21262D; border-radius: 10px;
+    padding: 16px; margin-top: 20px; font-family: 'Courier New', monospace;
+    font-size: 12px; color: #7EE787;
+}
+.q-coll-info .q-line { margin-bottom: 4px; }
+.q-coll-info .q-key { color: #6B7280; }
+
+/* ── EMPTY STATE ── */
+.empty-state { text-align: center; padding: 60px 20px; color: #484F58; }
+.empty-state .em-icon { font-size: 40px; margin-bottom: 12px; }
+.empty-state .em-text { font-size: 14px; }
+.blink::after { content: '|'; animation: bk 1s step-end infinite; }
+@keyframes bk { 50% { opacity: 0; } }
+
+/* ── ALERT BANNER ── */
+.alert-banner {
+    background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 10px; padding: 12px 18px; font-size: 13px;
+    color: #FCA5A5; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;
+}
+.alert-banner .ab-dot { width: 8px; height: 8px; border-radius: 50%; background: #EF4444; flex-shrink: 0; animation: livePulse 2s infinite; }
+
+/* ── SUMMARY BAR ── */
+.summary-bar {
+    display: flex; align-items: center; gap: 24px;
+    background: #161B22; border: 1px solid #21262D; border-radius: 10px;
+    padding: 14px 20px; margin-bottom: 20px; flex-wrap: wrap;
+}
+.sb-item { font-size: 13px; color: #8B949E; }
+.sb-item strong { color: #F0F6FC; font-weight: 700; }
+.sb-sep { width: 1px; height: 20px; background: #21262D; }
+
+/* ── CHART CONTAINER ── */
+.chart-wrap { position: relative; width: 100%; }
+.chart-wrap canvas { width: 100% !important; }
+
+/* ── STAT PILLS ROW ── */
+.stat-pills { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.stat-pill {
+    display: flex; align-items: center; gap: 8px;
+    background: #161B22; border: 1px solid #21262D; border-radius: 10px;
+    padding: 10px 18px;
+}
+.stat-pill .sp-num { font-size: 20px; font-weight: 800; }
+.stat-pill .sp-label { font-size: 11px; color: #6B7280; }
+
+/* ── FILTER BUTTONS ── */
+.filter-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+
+/* ── SYSTEM LOG ── */
+.syslog-panel {
+    background: #0D1117; border: 1px solid #30363D; border-radius: 12px;
+    padding: 16px; max-height: 640px; overflow-y: auto;
+    font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.8;
+}
+.syslog-empty {
+    color: #3FB950; text-align: center; padding: 60px 20px; font-size: 13px;
+    font-family: 'Courier New', monospace;
+}
+.syslog-empty::before { content: '> '; }
+.syslog-empty::after { content: '_'; animation: bk 1s step-end infinite; }
+.log-line {
+    padding: 4px 8px; border-radius: 4px; margin-bottom: 2px;
+    display: flex; align-items: center; gap: 8px; flex-wrap: nowrap;
+    transition: background 0.1s;
+}
+.log-line:hover { background: rgba(255,255,255,0.03); }
+.log-ts { color: #484F58; flex-shrink: 0; white-space: nowrap; }
+.log-level { font-weight: 700; flex-shrink: 0; min-width: 60px; }
+.log-level.INFO { color: #58A6FF; }
+.log-level.SUCCESS { color: #3FB950; }
+.log-level.ERROR { color: #F85149; }
+.log-level.WARNING { color: #D29922; }
+.log-level.STATE { color: #A78BFA; }
+.log-comp {
+    font-size: 9px; font-weight: 700; padding: 2px 8px;
+    border-radius: 6px; flex-shrink: 0; letter-spacing: 0.3px;
+    font-family: 'Inter', sans-serif; text-transform: uppercase;
+}
+.log-comp.VOICE { background: rgba(168,85,247,0.15); color: #C4B5FD; }
+.log-comp.GROQ { background: rgba(245,158,11,0.15); color: #FBBF24; }
+.log-comp.QDRANT { background: rgba(220,36,76,0.15); color: #F85149; }
+.log-comp.CHANAKYA { background: rgba(99,102,241,0.15); color: #A5B4FC; }
+.log-comp.EMAIL { background: rgba(16,185,129,0.15); color: #6EE7B7; }
+.log-comp.VAPI { background: rgba(6,182,212,0.15); color: #67E8F9; }
+.log-comp.MINIMAX { background: rgba(59,130,246,0.15); color: #93C5FD; }
+.log-msg { color: #C9D1D9; flex: 1; min-width: 0; }
+.log-details { color: #484F58; flex-shrink: 0; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+    <div class="sidebar-logo">
+        <div class="brand">&#9889; CHANAKYA</div>
+        <div class="sub">Sarvoday Textiles</div>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav">
+        <div class="nav-item active" data-view="overview"><span class="nav-icon">&#127968;</span> Overview</div>
+        <div class="nav-item" data-view="payments"><span class="nav-icon">&#128176;</span> Payments</div>
+        <div class="nav-item" data-view="production"><span class="nav-icon">&#127981;</span> Production</div>
+        <div class="nav-item" data-view="inventory"><span class="nav-icon">&#128230;</span> Inventory</div>
+        <div class="nav-item" data-view="labour"><span class="nav-icon">&#128119;</span> Labour</div>
+        <div class="nav-item" data-view="financials"><span class="nav-icon">&#128202;</span> Financials</div>
+        <div class="nav-item" data-view="actions"><span class="nav-icon">&#9889;</span> Live Actions</div>
+        <div class="nav-item" data-view="qdrant"><span class="nav-icon">&#9672;</span> Qdrant AI</div>
+        <div class="nav-item" data-view="syslog"><span class="nav-icon">&#128421;</span> System Log</div>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="live-dot-sm"></div>
+        <div class="ft-text"><strong>LIVE</strong><br>Voice AI Active</div>
+    </div>
+</aside>
+
+<!-- HEADER -->
+<header class="top-header">
+    <div class="hdr-title" id="hdr-title">Overview</div>
+    <input class="hdr-search" placeholder="Ask Chanakya anything..." readonly>
+    <div class="hdr-right">
+        <span class="hdr-badge green" id="conn-badge">&#9673; Connected</span>
+        <span class="hdr-badge red">&#9673; Qdrant</span>
+        <button class="btn btn-red" id="btn-reset" style="display:flex;align-items:center;gap:5px;padding:6px 14px;font-size:11px" onclick="document.getElementById('reset-modal').style.display='flex'">&#10227; Reset</button>
+        <span class="hdr-clock" id="hdr-clock">--:--:--</span>
+    </div>
+</header>
+
+<!-- MAIN CONTENT -->
+<main class="main" id="main-content">
+
+<!-- ═══ VIEW: OVERVIEW ═══ -->
+<section class="view active" id="view-overview">
+    <div class="row row-4" id="ov-kpis"></div>
+    <div class="row row-2">
+        <div class="card"><div class="card-title">Revenue vs Expenses (6 Months)</div><div class="chart-wrap"><canvas id="chart-rev-exp" height="220"></canvas></div></div>
+        <div class="card"><div class="card-title">Expense Breakdown</div><div class="chart-wrap"><canvas id="chart-exp-donut" height="220"></canvas></div></div>
+    </div>
+    <div class="row row-3">
+        <div class="card" id="ov-alerts"><div class="card-title">&#128680; Critical Alerts</div><div id="ov-alerts-body"></div></div>
+        <div class="card"><div class="card-title">&#9889; Recent Activity</div><div id="ov-activity"></div></div>
+        <div class="card" id="ov-quick"><div class="card-title">&#128200; Quick Stats</div><div id="ov-quick-body"></div></div>
+    </div>
+</section>
+
+<!-- ═══ VIEW: PAYMENTS ═══ -->
+<section class="view" id="view-payments">
+    <div class="summary-bar" id="pay-summary"></div>
+    <div class="card" style="margin-bottom:20px"><div class="card-title">Vendor Payments</div><div style="overflow-x:auto"><table class="dtable" id="pay-table"><thead><tr><th>Vendor</th><th>Amount</th><th>Days Overdue</th><th>Status</th><th>Action</th></tr></thead><tbody></tbody><tfoot></tfoot></table></div></div>
+    <div class="card"><div class="card-title">Cash Flow (This Month)</div><div class="chart-wrap"><canvas id="chart-cashflow" height="200"></canvas></div></div>
+</section>
+
+<!-- ═══ VIEW: PRODUCTION ═══ -->
+<section class="view" id="view-production">
+    <div class="stat-pills" id="prod-pills"></div>
+    <div class="card" style="margin-bottom:20px"><div class="card-title">Order Pipeline</div><div class="kanban" id="prod-kanban"></div></div>
+    <div class="card"><div class="card-title">Batch Progress</div><table class="dtable" id="batch-table"><thead><tr><th>Batch</th><th>Machine</th><th>Fabric</th><th>Progress</th><th>Status</th></tr></thead><tbody></tbody></table></div>
+</section>
+
+<!-- ═══ VIEW: INVENTORY ═══ -->
+<section class="view" id="view-inventory">
+    <div id="inv-alert"></div>
+    <div class="card" style="margin-bottom:20px"><div class="card-title">Raw Materials</div><div style="overflow-x:auto"><table class="dtable" id="inv-table"><thead><tr><th>Material</th><th>Stock (kg)</th><th>Reorder Level</th><th>Days Remaining</th><th>Supplier</th><th>Status</th><th>Action</th></tr></thead><tbody></tbody></table></div></div>
+    <div class="row row-2">
+        <div class="card"><div class="card-title">Fabric Sales Distribution</div><div class="chart-wrap"><canvas id="chart-fabric-donut" height="260"></canvas></div></div>
+        <div class="card"><div class="card-title">Client Revenue</div><div class="chart-wrap"><canvas id="chart-client-bar" height="260"></canvas></div></div>
+    </div>
+</section>
+
+<!-- ═══ VIEW: LABOUR ═══ -->
+<section class="view" id="view-labour">
+    <div class="row row-4" id="lab-stats"></div>
+    <div class="card" style="margin-bottom:20px"><div class="card-title">Attendance</div><div style="overflow-x:auto"><table class="dtable" id="lab-table"><thead><tr><th>Name</th><th>Role</th><th>Shift</th><th>Status</th><th>Days This Month</th><th>Salary Due</th></tr></thead><tbody></tbody></table></div></div>
+    <div class="card"><div class="card-title">Employee Productivity (Days Worked)</div><div class="chart-wrap"><canvas id="chart-labour-bar" height="220"></canvas></div></div>
+</section>
+
+<!-- ═══ VIEW: FINANCIALS ═══ -->
+<section class="view" id="view-financials">
+    <div class="row row-3" id="fin-kpis"></div>
+    <div class="card" style="margin-bottom:20px"><div class="card-title">Revenue vs Expenses Trend</div><div class="chart-wrap"><canvas id="chart-fin-line" height="240"></canvas></div></div>
+    <div class="row row-2">
+        <div class="card"><div class="card-title">Weekly Cash Flow</div><div class="chart-wrap"><canvas id="chart-fin-cashflow" height="220"></canvas></div></div>
+        <div class="card"><div class="card-title">Revenue by Client</div><div class="chart-wrap"><canvas id="chart-fin-client" height="220"></canvas></div></div>
+    </div>
+    <div class="row row-2">
+        <div class="card"><div class="card-title">Fabric Sales Breakdown</div><div style="overflow-x:auto"><table class="dtable" id="fab-table"><thead><tr><th>Fabric</th><th>Meters</th><th>Revenue</th><th>Share</th></tr></thead><tbody></tbody></table></div></div>
+        <div class="card"><div class="card-title">Monthly Profit</div><div class="chart-wrap"><canvas id="chart-fin-profit" height="200"></canvas></div></div>
+    </div>
+</section>
+
+<!-- ═══ VIEW: LIVE ACTIONS ═══ -->
+<section class="view" id="view-actions">
+    <div class="filter-row" id="act-filters">
+        <button class="btn btn-ghost active" data-filter="all">All</button>
+        <button class="btn btn-ghost" data-filter="email">&#128231; Emails</button>
+        <button class="btn btn-ghost" data-filter="call">&#128222; Calls</button>
+    </div>
+    <div id="act-feed">
+        <div class="empty-state"><div class="em-icon">&#9889;</div><div class="em-text"><span class="blink">Awaiting voice commands from Chanakya...</span></div></div>
+    </div>
+</section>
+
+<!-- ═══ VIEW: QDRANT AI ═══ -->
+<section class="view" id="view-qdrant">
+    <div class="q-stat-row">
+        <div class="q-stat"><div class="q-stat-val">77</div><div class="q-stat-lbl">Documents</div></div>
+        <div class="q-stat"><div class="q-stat-val">384</div><div class="q-stat-lbl">Dimensions</div></div>
+        <div class="q-stat"><div class="q-stat-val">Cosine</div><div class="q-stat-lbl">Similarity</div></div>
+        <div class="q-stat"><div class="q-stat-val">AWS</div><div class="q-stat-lbl">Frankfurt Cluster</div></div>
+    </div>
+    <div id="q-body">
+        <div class="empty-state"><div class="em-icon">&#9672;</div><div class="em-text"><span class="blink">Awaiting voice query from Chanakya...</span></div></div>
+    </div>
+    <div class="q-coll-info" id="q-coll">
+        <div class="q-line"><span class="q-key">collection:</span> chanakya</div>
+        <div class="q-line"><span class="q-key">vectors:</span> 384-dimensional float32</div>
+        <div class="q-line"><span class="q-key">distance:</span> Cosine</div>
+        <div class="q-line"><span class="q-key">points:</span> 77</div>
+        <div class="q-line"><span class="q-key">index:</span> HNSW (ef_construct=128)</div>
+        <div class="q-line"><span class="q-key">cluster:</span> eu-central-1 (AWS Frankfurt)</div>
+    </div>
+</section>
+
+<!-- ═══ VIEW: SYSTEM LOG ═══ -->
+<section class="view" id="view-syslog">
+    <div class="filter-row" id="log-filters">
+        <button class="btn btn-ghost active" data-logfilter="all">All</button>
+        <button class="btn btn-ghost" data-logfilter="VOICE">VOICE</button>
+        <button class="btn btn-ghost" data-logfilter="QDRANT">QDRANT</button>
+        <button class="btn btn-ghost" data-logfilter="GROQ">GROQ</button>
+        <button class="btn btn-ghost" data-logfilter="EMAIL">EMAIL</button>
+        <button class="btn btn-ghost" data-logfilter="VAPI">VAPI</button>
+        <button class="btn btn-ghost" data-logfilter="MINIMAX">MINIMAX</button>
+        <button class="btn btn-ghost" data-logfilter="ERROR">ERROR</button>
+        <button class="btn btn-ghost" data-logfilter="STATE">STATE</button>
+    </div>
+    <div class="syslog-panel" id="syslog-panel">
+        <div class="syslog-empty">System ready. Waiting for voice commands...</div>
+    </div>
+</section>
+
+</main>
+
+<!-- RESET MODAL -->
+<div id="reset-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;backdrop-filter:blur(4px)" onclick="if(event.target===this){this.style.display='none';document.getElementById('reset-pwd').value='';document.getElementById('reset-err').style.display='none'}">
+    <div style="background:#161B22;border:1px solid #EF4444;border-radius:16px;padding:32px;width:400px;max-width:90vw;text-align:center" onclick="event.stopPropagation()">
+        <div style="font-size:40px;margin-bottom:12px">&#9888;</div>
+        <div style="font-size:18px;font-weight:700;color:#F0F6FC;margin-bottom:8px">Reset All Data</div>
+        <div style="font-size:13px;color:#6B7280;margin-bottom:24px;line-height:1.5">This will clear all logs, activity feed, state history and Qdrant search results.</div>
+        <input type="password" id="reset-pwd" placeholder="Enter password" style="width:100%;padding:10px 14px;background:#0D1117;border:1px solid #374151;border-radius:8px;color:#C9D1D9;font-size:13px;font-family:inherit;outline:none;margin-bottom:8px" onkeydown="if(event.key==='Enter')document.getElementById('btn-confirm-reset').click()">
+        <div id="reset-err" style="display:none;color:#EF4444;font-size:12px;font-weight:600;margin-bottom:12px">Wrong password</div>
+        <div style="display:flex;gap:12px;margin-top:16px">
+            <button class="btn btn-ghost" style="flex:1;padding:10px" onclick="document.getElementById('reset-modal').style.display='none';document.getElementById('reset-pwd').value='';document.getElementById('reset-err').style.display='none'">Cancel</button>
+            <button class="btn" id="btn-confirm-reset" style="flex:1;padding:10px;background:#EF4444;color:#FFF;font-weight:700" onclick="doReset()">Confirm Reset</button>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" style="display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#065F46;border:1px solid #10B981;border-radius:10px;padding:12px 28px;color:#6EE7B7;font-size:13px;font-weight:600;z-index:99999;box-shadow:0 8px 24px rgba(0,0,0,0.4);transition:opacity 0.3s"></div>
+
+<style>
+@keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)} }
+.shake { animation: shake 0.4s ease; }
+</style>
+
+<script>
+/* ══════════════════════════════════════
+   DATA STORE
+   ══════════════════════════════════════ */
+let D = {};       // dashboard-data
+let FIN = {};     // financials
+let ACT = [];     // activity-feed
+let QS = {};      // qdrant-status
+let charts = {};  // Chart.js instances
+let actFilter = 'all';
+let SLOG = [];    // system-log
+let logFilter = 'all';
+
+const INR = n => '\u20B9' + Number(n).toLocaleString('en-IN');
+
+/* ══════════════════════════════════════
+   CLOCK
+   ══════════════════════════════════════ */
+function tickClock() { document.getElementById('hdr-clock').textContent = new Date().toLocaleTimeString('en-IN', {hour12: false}); }
+tickClock(); setInterval(tickClock, 1000);
+
+/* ══════════════════════════════════════
+   NAVIGATION
+   ══════════════════════════════════════ */
+const viewNames = { overview:'Overview', payments:'Payments', production:'Production', inventory:'Inventory', labour:'Labour', financials:'Financials', actions:'Live Actions', qdrant:'Qdrant AI', syslog:'System Log' };
+document.getElementById('sidebar-nav').addEventListener('click', e => {
+    const item = e.target.closest('.nav-item');
+    if (!item) return;
+    const v = item.dataset.view;
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    item.classList.add('active');
+    document.querySelectorAll('.view').forEach(s => s.classList.remove('active'));
+    document.getElementById('view-' + v).classList.add('active');
+    document.getElementById('hdr-title').textContent = viewNames[v] || v;
+    renderCurrentView(v);
+});
+
+function currentView() {
+    const a = document.querySelector('.nav-item.active');
+    return a ? a.dataset.view : 'overview';
+}
+
+/* ══════════════════════════════════════
+   CHART THEME
+   ══════════════════════════════════════ */
+Chart.defaults.color = '#8B949E';
+Chart.defaults.font.family = 'Inter';
+Chart.defaults.plugins.legend.labels.boxWidth = 12;
+Chart.defaults.plugins.tooltip.backgroundColor = '#1F2937';
+Chart.defaults.plugins.tooltip.titleColor = '#F0F6FC';
+Chart.defaults.plugins.tooltip.bodyColor = '#C9D1D9';
+Chart.defaults.plugins.tooltip.borderColor = '#30363D';
+Chart.defaults.plugins.tooltip.borderWidth = 1;
+Chart.defaults.plugins.tooltip.cornerRadius = 8;
+Chart.defaults.plugins.tooltip.padding = 10;
+
+function gridOpts(stacked) {
+    return { grid: { color: '#21262D', drawBorder: false }, ticks: { color: '#6B7280', font: { size: 11 } }, stacked: !!stacked };
+}
+function yOpts(stacked) {
+    return { grid: { color: '#21262D', drawBorder: false }, ticks: { color: '#6B7280', font: { size: 11 }, callback: v => v >= 100000 ? (v/100000).toFixed(1)+'L' : v >= 1000 ? (v/1000)+'K' : v }, stacked: !!stacked };
+}
+function killChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+/* ══════════════════════════════════════
+   VIEW: OVERVIEW
+   ══════════════════════════════════════ */
+function renderOverview() {
+    if (!D.summary) return;
+    const s = D.summary;
+    const today = D.sales_today || {};
+    document.getElementById('ov-kpis').innerHTML = `
+        <div class="card kpi"><div class="kpi-label">Total Pending</div><div class="kpi-row"><span class="kpi-value">${INR(s.total_pending)}</span><span class="kpi-trend down">&#9660; overdue</span></div><div class="kpi-sub">${D.pending_payments?D.pending_payments.length:0} vendors</div></div>
+        <div class="card kpi"><div class="kpi-label">Today Revenue</div><div class="kpi-row"><span class="kpi-value">${INR(today.total||0)}</span><span class="kpi-trend up">&#9650; ${today.orders_completed||0} orders</span></div><div class="kpi-sub">Top: ${today.top_item||'-'} ${today.units?today.units+'m':''}</div></div>
+        <div class="card kpi"><div class="kpi-label">Active Orders</div><div class="kpi-row"><span class="kpi-value">${D.orders?D.orders.length:0}</span><span class="kpi-trend neutral">${s.ready_to_dispatch?s.ready_to_dispatch.length:0} ready</span></div><div class="kpi-sub">${s.ready_to_dispatch?s.ready_to_dispatch.join(', '):''}</div></div>
+        <div class="card kpi"><div class="kpi-label">Capacity Utilization</div><div class="kpi-row"><span class="kpi-value">${FIN.kpi?FIN.kpi.capacity_utilization:'--'}%</span><span class="kpi-trend neutral">&#9679; factory</span></div><div class="kpi-sub">${s.machines_running||0} machines running</div></div>
+    `;
+
+    // Revenue vs Expenses bar chart
+    if (FIN.monthly_revenue) {
+        killChart('revExp');
+        const ctx = document.getElementById('chart-rev-exp').getContext('2d');
+        charts.revExp = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: FIN.monthly_revenue.map(m => m.month),
+                datasets: [
+                    { label: 'Revenue', data: FIN.monthly_revenue.map(m => m.revenue), backgroundColor: '#6366F1', borderRadius: 4, barPercentage: 0.6 },
+                    { label: 'Expenses', data: FIN.monthly_revenue.map(m => m.expenses), backgroundColor: '#EF4444', borderRadius: 4, barPercentage: 0.6 },
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { x: gridOpts(), y: yOpts() }, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+
+    // Expense donut
+    if (FIN.expense_breakdown) {
+        killChart('expDonut');
+        const ctx2 = document.getElementById('chart-exp-donut').getContext('2d');
+        const colors = ['#6366F1','#10B981','#F59E0B','#EF4444','#8B5CF6','#6B7280'];
+        charts.expDonut = new Chart(ctx2, {
+            type: 'doughnut',
+            data: {
+                labels: FIN.expense_breakdown.map(e => e.category),
+                datasets: [{ data: FIN.expense_breakdown.map(e => e.amount), backgroundColor: colors, borderWidth: 0 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'right', labels: { padding: 14 } } } }
+        });
+    }
+
+    // Alerts
+    let alerts = '';
+    if (s.critical_materials && s.critical_materials.length) alerts += s.critical_materials.map(m => `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span class="pill pill-red">STOCK</span><span style="font-size:13px">${m} — Critical stock</span></div>`).join('');
+    const stopped = D.machines ? D.machines.filter(m => m.status === 'stopped') : [];
+    if (stopped.length) alerts += stopped.map(m => `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span class="pill pill-orange">MACHINE</span><span style="font-size:13px">${m.machine_id} stopped — ${m.efficiency_percent}% eff</span></div>`).join('');
+    if (!alerts) alerts = '<div style="color:#484F58;font-size:13px;padding:12px 0">No critical alerts</div>';
+    document.getElementById('ov-alerts-body').innerHTML = alerts;
+    document.getElementById('ov-alerts').style.borderColor = (s.critical_materials && s.critical_materials.length) ? 'rgba(239,68,68,0.3)' : '#21262D';
+
+    // Activity (last 5)
+    const actSlice = (ACT || []).slice(0, 5);
+    document.getElementById('ov-activity').innerHTML = actSlice.length
+        ? actSlice.map(a => `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #21262D"><span>${a.icon}</span><span style="flex:1;font-size:12px">${a.action}</span><span style="font-size:10px;color:#484F58">${a.timestamp}</span></div>`).join('')
+        : '<div style="color:#484F58;font-size:13px;padding:12px 0">No recent actions</div>';
+
+    // Quick stats
+    const kpi = FIN.kpi || {};
+    document.getElementById('ov-quick-body').innerHTML = `
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #21262D"><span style="font-size:12px;color:#6B7280">Machines Running</span><span style="font-size:14px;font-weight:700;color:#10B981">${s.machines_running||0}/${D.machines?D.machines.length:0}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #21262D"><span style="font-size:12px;color:#6B7280">On-Time Delivery</span><span style="font-size:14px;font-weight:700;color:#10B981">${kpi.on_time_delivery||'--'}%</span></div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #21262D"><span style="font-size:12px;color:#6B7280">Defect Rate</span><span style="font-size:14px;font-weight:700;color:#F59E0B">${kpi.defect_rate||'--'}%</span></div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0"><span style="font-size:12px;color:#6B7280">Production Efficiency</span><span style="font-size:14px;font-weight:700;color:#6366F1">${kpi.production_efficiency||'--'}%</span></div>
+    `;
+}
+
+/* ══════════════════════════════════════
+   VIEW: PAYMENTS
+   ══════════════════════════════════════ */
+function renderPayments() {
+    if (!D.pending_payments) return;
+    const pp = D.pending_payments;
+    const total = pp.reduce((s,p) => s + p.amount, 0);
+    const oldest = pp.reduce((a,b) => a.days_overdue > b.days_overdue ? a : b);
+    const critical = pp.filter(p => p.days_overdue > 30).length;
+    document.getElementById('pay-summary').innerHTML = `
+        <div class="sb-item">Total Overdue: <strong>${INR(total)}</strong></div><div class="sb-sep"></div>
+        <div class="sb-item">Oldest: <strong>${oldest.name} (${oldest.days_overdue}d)</strong></div><div class="sb-sep"></div>
+        <div class="sb-item">Critical (&gt;30d): <strong style="color:#FCA5A5">${critical} vendors</strong></div>
+    `;
+
+    const payStates = D.states ? D.states.payments : {};
+    const tbody = document.querySelector('#pay-table tbody');
+    tbody.innerHTML = pp.map(p => {
+        const pillCls = p.days_overdue > 30 ? 'pill-red' : p.days_overdue > 14 ? 'pill-orange' : 'pill-yellow';
+        const st = payStates[p.name] || {};
+        const stStatus = st.status || 'OVERDUE';
+        let statusPill = '';
+        if (stStatus === 'PAYMENT_RECEIVED') statusPill = '<span class="pill pill-green">PAID</span>';
+        else if (stStatus === 'ESCALATED') statusPill = '<span class="pill pill-red" style="animation:blink 1s infinite">ESCALATED</span>';
+        else if (stStatus === 'CALL_MADE') statusPill = '<span class="pill" style="background:rgba(59,130,246,0.15);color:#60A5FA">CALL MADE</span>';
+        else if (stStatus === 'REMINDER_SENT') statusPill = `<span class="pill pill-orange">REMINDED (${st.reminder_count || 1}x)</span>`;
+        else statusPill = '<span class="pill pill-red">OVERDUE</span>';
+        return `<tr><td style="font-weight:600;color:#F0F6FC">${p.name}</td><td>${INR(p.amount)}</td><td><span class="pill ${pillCls}">${p.days_overdue} days</span></td><td>${statusPill}</td><td><button class="btn btn-indigo" onclick="alert('Reminder sent to ${p.name}')">Send Reminder</button></td></tr>`;
+    }).join('');
+    document.querySelector('#pay-table tfoot').innerHTML = `<tr><td>Total (${pp.length} vendors)</td><td>${INR(total)}</td><td colspan="3"></td></tr>`;
+
+    // Cash flow chart
+    if (FIN.cash_flow) {
+        killChart('cashflow');
+        charts.cashflow = new Chart(document.getElementById('chart-cashflow').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: FIN.cash_flow.map(c => c.week),
+                datasets: [
+                    { label: 'Inflow', data: FIN.cash_flow.map(c => c.inflow), backgroundColor: '#10B981', borderRadius: 4, barPercentage: 0.5 },
+                    { label: 'Outflow', data: FIN.cash_flow.map(c => c.outflow), backgroundColor: '#EF4444', borderRadius: 4, barPercentage: 0.5 },
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { x: gridOpts(), y: yOpts() }, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+}
+
+/* ══════════════════════════════════════
+   VIEW: PRODUCTION
+   ══════════════════════════════════════ */
+function renderProduction() {
+    if (!D.orders) return;
+    const counts = { in_production: 0, dyeing: 0, quality_check: 0, ready_to_dispatch: 0 };
+    D.orders.forEach(o => { if (counts[o.status] !== undefined) counts[o.status]++; });
+    document.getElementById('prod-pills').innerHTML = `
+        <div class="stat-pill"><span class="sp-num" style="color:#6366F1">${counts.in_production}</span><span class="sp-label">In Production</span></div>
+        <div class="stat-pill"><span class="sp-num" style="color:#A78BFA">${counts.dyeing}</span><span class="sp-label">Dyeing</span></div>
+        <div class="stat-pill"><span class="sp-num" style="color:#F59E0B">${counts.quality_check}</span><span class="sp-label">Quality Check</span></div>
+        <div class="stat-pill"><span class="sp-num" style="color:#10B981">${counts.ready_to_dispatch}</span><span class="sp-label">Dispatch Ready</span></div>
+    `;
+
+    const buckets = { in_production: [], dyeing: [], quality_check: [], ready_to_dispatch: [] };
+    D.orders.forEach(o => { if (buckets[o.status]) buckets[o.status].push(o); });
+    const cols = [
+        { key: 'in_production', label: 'In Production', color: '#6366F1', dot: '#818CF8' },
+        { key: 'dyeing', label: 'Dyeing', color: '#A78BFA', dot: '#C4B5FD' },
+        { key: 'quality_check', label: 'Quality Check', color: '#F59E0B', dot: '#FDE047' },
+        { key: 'ready_to_dispatch', label: 'Dispatch Ready', color: '#10B981', dot: '#6EE7B7', bg: true },
+    ];
+    document.getElementById('prod-kanban').innerHTML = cols.map(c => {
+        const items = buckets[c.key];
+        return `<div class="kanban-col ${c.bg?'dispatch-bg':''}">
+            <div class="kanban-header"><div class="kanban-dot" style="background:${c.dot}"></div><span style="color:${c.color}">${c.label}</span><span class="kanban-count">${items.length}</span></div>
+            ${items.map(o => `<div class="k-card">${o.priority==='high'?'<span class="k-priority"><span class="pill pill-red">HIGH</span></span>':''}<div class="k-client">${o.client_name}</div><div class="k-meta">${o.fabric_type} &middot; ${o.quantity_meters}m</div><div class="k-due">Due ${o.due_date}</div></div>`).join('')}
+        </div>`;
+    }).join('');
+
+    // Batch table
+    if (D.batches) {
+        document.querySelector('#batch-table tbody').innerHTML = D.batches.map(b => {
+            const pct = Math.round((b.meters_produced / b.target_meters) * 100);
+            const clr = b.status === 'running' ? '#10B981' : b.status === 'stopped' ? '#EF4444' : '#F59E0B';
+            const statusCls = b.status === 'running' ? 'pill-green' : b.status === 'stopped' ? 'pill-red' : 'pill-orange';
+            return `<tr><td style="font-weight:600;color:#F0F6FC">${b.batch_id}</td><td>${b.machine_id}</td><td>${b.fabric_type}</td><td style="min-width:180px"><div style="display:flex;align-items:center;gap:10px"><div class="pbar" style="flex:1"><div class="pbar-fill" style="width:${pct}%;background:${clr}"></div></div><span style="font-size:12px;font-weight:600;color:${clr}">${pct}%</span></div></td><td><span class="pill ${statusCls}">${b.status}</span></td></tr>`;
+        }).join('');
+    }
+}
+
+/* ══════════════════════════════════════
+   VIEW: INVENTORY
+   ══════════════════════════════════════ */
+function renderInventory() {
+    if (!D.raw_material) return;
+    const critical = D.raw_material.filter(r => r.days_remaining <= 2);
+    document.getElementById('inv-alert').innerHTML = critical.length
+        ? `<div class="alert-banner"><div class="ab-dot"></div>${critical.length} material${critical.length>1?'s':''} CRITICAL: ${critical.map(c=>c.material).join(', ')}</div>` : '';
+
+    const matStates = D.states ? D.states.materials : {};
+    document.querySelector('#inv-table tbody').innerHTML = D.raw_material.map(r => {
+        const ms = matStates[r.material] || {};
+        let status, sCls;
+        if (ms.status === 'ORDER_PLACED') { status = 'ORDER PLACED'; sCls = 'pill-green'; }
+        else if (ms.status === 'CRITICAL') { status = 'CRITICAL'; sCls = 'pill-red'; }
+        else { status = r.days_remaining <= 2 ? 'CRITICAL' : r.days_remaining <= 5 ? 'WARNING' : 'OK'; sCls = r.days_remaining <= 2 ? 'pill-red' : r.days_remaining <= 5 ? 'pill-orange' : 'pill-green'; }
+        const pct = Math.min((r.days_remaining / 15) * 100, 100);
+        const clr = r.days_remaining <= 2 ? '#EF4444' : r.days_remaining <= 5 ? '#F59E0B' : '#10B981';
+        return `<tr>
+            <td style="font-weight:600;color:#F0F6FC">${r.material}</td>
+            <td>${r.stock_kg.toLocaleString()}</td>
+            <td>${r.reorder_level_kg.toLocaleString()}</td>
+            <td style="min-width:140px"><div style="display:flex;align-items:center;gap:8px"><div class="pbar" style="flex:1"><div class="pbar-fill" style="width:${pct}%;background:${clr}"></div></div><span style="font-size:11px;color:${clr}">${r.days_remaining}d</span></div></td>
+            <td>${r.supplier_name}</td>
+            <td><span class="pill ${sCls}">${status}</span></td>
+            <td>${r.days_remaining<=3?'<button class="btn btn-red">Order Now</button>':'<span style="color:#484F58;font-size:12px">—</span>'}</td>
+        </tr>`;
+    }).join('');
+
+    // Fabric donut
+    if (FIN.fabric_sales) {
+        killChart('fabricDonut');
+        charts.fabricDonut = new Chart(document.getElementById('chart-fabric-donut').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: FIN.fabric_sales.map(f => f.fabric),
+                datasets: [{ data: FIN.fabric_sales.map(f => f.revenue), backgroundColor: ['#6366F1','#10B981','#F59E0B','#EF4444'], borderWidth: 0 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+
+    // Client bar
+    if (FIN.client_revenue) {
+        killChart('clientBar');
+        charts.clientBar = new Chart(document.getElementById('chart-client-bar').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: FIN.client_revenue.map(c => c.client),
+                datasets: [{ label: 'Revenue', data: FIN.client_revenue.map(c => c.revenue), backgroundColor: '#6366F1', borderRadius: 4, barPercentage: 0.6 }]
+            },
+            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: yOpts(), y: gridOpts() }, plugins: { legend: { display: false } } }
+        });
+    }
+}
+
+/* ══════════════════════════════════════
+   VIEW: LABOUR
+   ══════════════════════════════════════ */
+function renderLabour() {
+    if (!D.labour || !D.summary) return;
+    const s = D.summary;
+    const totalSal = D.labour.reduce((t,w) => t + w.salary_due, 0);
+    document.getElementById('lab-stats').innerHTML = `
+        <div class="card kpi"><div class="kpi-label">Present</div><div class="kpi-value" style="color:#10B981">${s.present_count}</div></div>
+        <div class="card kpi"><div class="kpi-label">Absent</div><div class="kpi-value" style="color:#EF4444">${s.absent_count}</div></div>
+        <div class="card kpi"><div class="kpi-label">Half Day</div><div class="kpi-value" style="color:#F59E0B">${s.half_day_count}</div></div>
+        <div class="card kpi"><div class="kpi-label">Salary Due</div><div class="kpi-value" style="color:#6366F1;font-size:22px">${INR(totalSal)}</div></div>
+    `;
+
+    document.querySelector('#lab-table tbody').innerHTML = D.labour.map(w => {
+        const sCls = w.attendance_today === 'present' ? 'pill-green' : w.attendance_today === 'absent' ? 'pill-red' : 'pill-orange';
+        const sText = w.attendance_today.replace('_',' ');
+        return `<tr><td style="font-weight:600;color:#F0F6FC">${w.name}</td><td>${w.role.replace(/_/g,' ')}</td><td>${w.shift}</td><td><span class="pill ${sCls}">${sText}</span></td><td>${w.days_worked_this_month}</td><td>${INR(w.salary_due)}</td></tr>`;
+    }).join('');
+
+    killChart('labourBar');
+    charts.labourBar = new Chart(document.getElementById('chart-labour-bar').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: D.labour.map(w => w.name.split(' ')[0]),
+            datasets: [{ label: 'Days Worked', data: D.labour.map(w => w.days_worked_this_month), backgroundColor: D.labour.map(w => w.attendance_today === 'present' ? '#10B981' : w.attendance_today === 'absent' ? '#EF4444' : '#F59E0B'), borderRadius: 4, barPercentage: 0.6 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { x: gridOpts(), y: { ...gridOpts(), min: 0, max: 30 } }, plugins: { legend: { display: false } } }
+    });
+}
+
+/* ══════════════════════════════════════
+   VIEW: FINANCIALS
+   ══════════════════════════════════════ */
+function renderFinancials() {
+    if (!FIN.kpi) return;
+    const k = FIN.kpi;
+    document.getElementById('fin-kpis').innerHTML = `
+        <div class="card kpi"><div class="kpi-label">Gross Margin</div><div class="kpi-row"><span class="kpi-value">${k.gross_margin_percent}%</span><span class="kpi-trend up">&#9650; healthy</span></div><div class="kpi-sub">Target: 25%+</div></div>
+        <div class="card kpi"><div class="kpi-label">Accounts Receivable</div><div class="kpi-row"><span class="kpi-value">${k.accounts_receivable_days}d</span><span class="kpi-trend neutral">avg collection</span></div><div class="kpi-sub">Industry avg: 45 days</div></div>
+        <div class="card kpi"><div class="kpi-label">Inventory Turnover</div><div class="kpi-row"><span class="kpi-value">${k.inventory_turnover}x</span><span class="kpi-trend up">&#9650; efficient</span></div><div class="kpi-sub">Annual rate</div></div>
+    `;
+
+    // Revenue vs Expenses line
+    if (FIN.monthly_revenue) {
+        killChart('finLine');
+        charts.finLine = new Chart(document.getElementById('chart-fin-line').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: FIN.monthly_revenue.map(m => m.month),
+                datasets: [
+                    { label: 'Revenue', data: FIN.monthly_revenue.map(m => m.revenue), borderColor: '#6366F1', backgroundColor: 'rgba(99,102,241,0.08)', fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#6366F1' },
+                    { label: 'Expenses', data: FIN.monthly_revenue.map(m => m.expenses), borderColor: '#EF4444', backgroundColor: 'rgba(239,68,68,0.05)', fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#EF4444' },
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { x: gridOpts(), y: yOpts() }, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+
+    // Cash flow
+    if (FIN.cash_flow) {
+        killChart('finCashflow');
+        charts.finCashflow = new Chart(document.getElementById('chart-fin-cashflow').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: FIN.cash_flow.map(c => c.week),
+                datasets: [
+                    { label: 'Inflow', data: FIN.cash_flow.map(c => c.inflow), backgroundColor: '#10B981', borderRadius: 4, barPercentage: 0.5 },
+                    { label: 'Outflow', data: FIN.cash_flow.map(c => c.outflow), backgroundColor: '#EF4444', borderRadius: 4, barPercentage: 0.5 },
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { x: gridOpts(), y: yOpts() }, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+
+    // Client revenue
+    if (FIN.client_revenue) {
+        killChart('finClient');
+        charts.finClient = new Chart(document.getElementById('chart-fin-client').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: FIN.client_revenue.map(c => c.client),
+                datasets: [{ label: 'Revenue', data: FIN.client_revenue.map(c => c.revenue), backgroundColor: ['#6366F1','#10B981','#F59E0B','#8B5CF6','#EC4899','#6B7280'], borderRadius: 4, barPercentage: 0.6 }]
+            },
+            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: yOpts(), y: gridOpts() }, plugins: { legend: { display: false } } }
+        });
+    }
+
+    // Fabric sales table
+    if (FIN.fabric_sales) {
+        document.querySelector('#fab-table tbody').innerHTML = FIN.fabric_sales.map(f => {
+            return `<tr><td style="font-weight:600;color:#F0F6FC">${f.fabric}</td><td>${f.meters.toLocaleString()}</td><td>${INR(f.revenue)}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="pbar" style="width:100px"><div class="pbar-fill" style="width:${f.share}%;background:#6366F1"></div></div><span style="font-size:12px">${f.share}%</span></div></td></tr>`;
+        }).join('');
+    }
+
+    // Profit chart
+    if (FIN.monthly_revenue) {
+        killChart('finProfit');
+        charts.finProfit = new Chart(document.getElementById('chart-fin-profit').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: FIN.monthly_revenue.map(m => m.month),
+                datasets: [{ label: 'Profit', data: FIN.monthly_revenue.map(m => m.profit), borderColor: '#10B981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.4, pointRadius: 5, pointBackgroundColor: '#10B981' }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { x: gridOpts(), y: yOpts() }, plugins: { legend: { display: false } } }
+        });
+    }
+}
+
+/* ══════════════════════════════════════
+   VIEW: LIVE ACTIONS
+   ══════════════════════════════════════ */
+function renderActions() {
+    const feed = document.getElementById('act-feed');
+    const filtered = actFilter === 'all' ? ACT : ACT.filter(a => a.type === actFilter);
+    if (!filtered || !filtered.length) {
+        feed.innerHTML = '<div class="empty-state"><div class="em-icon">&#9889;</div><div class="em-text"><span class="blink">Awaiting voice commands from Chanakya...</span></div></div>';
+        return;
+    }
+    feed.innerHTML = filtered.map(a => {
+        const typeBadge = a.type === 'email' ? '<span class="act-type-badge pill-green">EMAIL</span>' : '<span class="act-type-badge pill-blue">CALL</span>';
+        return `<div class="act-card ${a.type}"><div class="act-icon">${a.icon}</div><div class="act-body"><div class="act-action">${a.action}${typeBadge}</div><div class="act-details">${a.details}</div></div><div class="act-ts">${a.timestamp}</div></div>`;
+    }).join('');
+}
+
+document.getElementById('act-filters').addEventListener('click', e => {
+    const btn = e.target.closest('.btn');
+    if (!btn) return;
+    actFilter = btn.dataset.filter;
+    document.querySelectorAll('#act-filters .btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderActions();
+});
+
+/* ══════════════════════════════════════
+   VIEW: QDRANT AI
+   ══════════════════════════════════════ */
+function renderQdrant() {
+    const el = document.getElementById('q-body');
+    const ls = QS.last_search;
+    if (!ls || !ls.query) {
+        el.innerHTML = '<div class="empty-state"><div class="em-icon">&#9672;</div><div class="em-text"><span class="blink">Awaiting voice query from Chanakya...</span></div></div>';
+        return;
+    }
+    let html = `<div class="q-query-box"><div class="q-query-label">Last Voice Query:</div><div class="q-query-text">"${ls.query}"</div><div class="q-query-ts">${ls.timestamp ? 'Searched at ' + ls.timestamp : ''}</div></div>`;
+    if (ls.results && ls.results.length) {
+        html += '<div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:#6B7280;margin-bottom:12px">Retrieved Documents:</div><div class="q-results">';
+        html += ls.results.map(r => {
+            const clr = r.score > 0.85 ? '#10B981' : r.score > 0.7 ? '#EAB308' : '#F59E0B';
+            const cls = r.score > 0.85 ? 'score-green' : r.score > 0.7 ? 'score-yellow' : 'score-orange';
+            const pct = (r.score * 100).toFixed(1);
+            return `<div class="q-result-card"><span class="q-score-badge pill ${cls === 'score-green' ? 'pill-green' : cls === 'score-yellow' ? 'pill-yellow' : 'pill-orange'}">${r.score.toFixed(3)}</span><div class="q-result-text">${r.text}</div><div class="pbar"><div class="pbar-fill" style="width:${pct}%;background:${clr}"></div></div></div>`;
+        }).join('');
+        html += '</div>';
+    }
+    el.innerHTML = html;
+}
+
+/* ══════════════════════════════════════
+   VIEW: SYSTEM LOG
+   ══════════════════════════════════════ */
+function renderSyslog() {
+    const el = document.getElementById('syslog-panel');
+    let filtered = SLOG;
+    if (logFilter === 'ERROR') {
+        filtered = SLOG.filter(l => l.level === 'ERROR');
+    } else if (logFilter !== 'all') {
+        filtered = SLOG.filter(l => l.component === logFilter);
+    }
+    if (!filtered || !filtered.length) {
+        el.innerHTML = '<div class="syslog-empty">System ready. Waiting for voice commands...</div>';
+        return;
+    }
+    el.innerHTML = filtered.map(l => {
+        return `<div class="log-line"><span class="log-ts">[${l.timestamp}]</span><span class="log-level ${l.level}">${l.level}</span><span class="log-comp ${l.component}">${l.component}</span><span class="log-msg">${l.message}</span>${l.details ? '<span class="log-details">' + l.details + '</span>' : ''}</div>`;
+    }).join('');
+}
+
+document.getElementById('log-filters').addEventListener('click', e => {
+    const btn = e.target.closest('.btn');
+    if (!btn) return;
+    logFilter = btn.dataset.logfilter;
+    document.querySelectorAll('#log-filters .btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderSyslog();
+});
+
+async function fetchSyslog() {
+    try {
+        const res = await fetch('/system-log');
+        const data = await res.json();
+        SLOG = data.logs || [];
+        if (currentView() === 'syslog') renderSyslog();
+    } catch (e) {}
+}
+
+/* ══════════════════════════════════════
+   RENDER DISPATCHER
+   ══════════════════════════════════════ */
+function renderCurrentView(v) {
+    v = v || currentView();
+    switch(v) {
+        case 'overview': renderOverview(); break;
+        case 'payments': renderPayments(); break;
+        case 'production': renderProduction(); break;
+        case 'inventory': renderInventory(); break;
+        case 'labour': renderLabour(); break;
+        case 'financials': renderFinancials(); break;
+        case 'actions': renderActions(); break;
+        case 'qdrant': renderQdrant(); break;
+        case 'syslog': renderSyslog(); break;
+    }
+}
+
+/* ══════════════════════════════════════
+   DATA FETCHING (independent intervals)
+   ══════════════════════════════════════ */
+async function fetchDashboard() {
+    try {
+        const res = await fetch('/dashboard-data');
+        D = await res.json();
+        document.getElementById('conn-badge').className = 'hdr-badge green';
+        document.getElementById('conn-badge').innerHTML = '&#9673; Connected';
+        renderCurrentView();
+    } catch (e) {
+        document.getElementById('conn-badge').className = 'hdr-badge red';
+        document.getElementById('conn-badge').innerHTML = '&#9888; Reconnecting...';
+    }
+}
+
+async function fetchFinancials() {
+    try {
+        const res = await fetch('/financials');
+        FIN = await res.json();
+        const v = currentView();
+        if (v === 'overview' || v === 'financials' || v === 'payments' || v === 'inventory') renderCurrentView(v);
+    } catch (e) {}
+}
+
+async function fetchActivity() {
+    try {
+        const res = await fetch('/activity-feed');
+        const data = await res.json();
+        ACT = data.activities || [];
+        const v = currentView();
+        if (v === 'actions' || v === 'overview') renderCurrentView(v);
+    } catch (e) {}
+}
+
+async function fetchQdrant() {
+    try {
+        const res = await fetch('/qdrant-status');
+        QS = await res.json();
+        if (currentView() === 'qdrant') renderQdrant();
+    } catch (e) {}
+}
+
+/* ══════════════════════════════════════
+   INIT
+   ══════════════════════════════════════ */
+fetchDashboard();
+fetchFinancials();
+fetchActivity();
+fetchQdrant();
+fetchSyslog();
+setInterval(fetchDashboard, 3000);
+setInterval(fetchActivity, 2000);
+setInterval(fetchQdrant, 3000);
+setInterval(fetchSyslog, 1000);
+setInterval(fetchFinancials, 5000);
+
+/* ══════════════════════════════════════
+   RESET
+   ══════════════════════════════════════ */
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        document.getElementById('reset-modal').style.display = 'none';
+        document.getElementById('reset-pwd').value = '';
+        document.getElementById('reset-err').style.display = 'none';
+    }
+});
+
+async function doReset() {
+    const pwd = document.getElementById('reset-pwd').value;
+    const errEl = document.getElementById('reset-err');
+    const input = document.getElementById('reset-pwd');
+    try {
+        const res = await fetch('/reset-all', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: pwd })
+        });
+        const data = await res.json();
+        if (data.status === 'error') {
+            errEl.style.display = 'block';
+            input.classList.remove('shake');
+            void input.offsetWidth;
+            input.classList.add('shake');
+            return;
+        }
+        // Success
+        document.getElementById('reset-modal').style.display = 'none';
+        input.value = '';
+        errEl.style.display = 'none';
+        showToast('System reset successfully');
+        fetchDashboard();
+        fetchFinancials();
+        fetchActivity();
+        fetchQdrant();
+        fetchSyslog();
+    } catch (e) {
+        errEl.textContent = 'Connection error';
+        errEl.style.display = 'block';
+    }
+}
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.display = 'block';
+    t.style.opacity = '1';
+    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => { t.style.display = 'none'; }, 300); }, 3000);
+}
+</script>
+</body>
+</html>
