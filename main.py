@@ -62,12 +62,12 @@ def qdrant_search(query_text, top_k=3):
         vec = [math.sin((h[i % 32] + i) * 0.1) for i in range(384)]
         norm = sum(x**2 for x in vec) ** 0.5
         query_vec = [x / norm for x in vec]
-        results = client.search(
+        results = client.query_points(
             collection_name="chanakya",
-            query_vector=query_vec,
+            query=query_vec,
             limit=top_k
         )
-        return [{"text": r.payload.get("text", ""), "score": round(r.score, 3)} for r in results]
+        return [{"text": r.payload.get("text", ""), "score": round(r.score, 3)} for r in results.points]
     except Exception as e:
         print(f"Qdrant search error: {e}")
         return []
@@ -510,7 +510,7 @@ async def send_email_endpoint(request: Request):
     body = await request.json()
     vendor_name = body.get("vendor_name", "")
     email_type = body.get("type", "followup")
-    vendor_email = body.get("email", "")
+    vendor_email = body.get("vendor_email", body.get("email", ""))
     amount = body.get("amount", 0)
     days_overdue = body.get("days_overdue", 0)
     material = body.get("material", "")
@@ -583,7 +583,10 @@ async def initiate_call_endpoint(request: Request):
                 headers={"Authorization": f"Bearer {VAPI_API_KEY}", "Content-Type": "application/json"},
                 json=vapi_payload
             )
-            result = response.json()
+            try:
+                result = response.json()
+            except:
+                result = {"status": "call_initiated", "raw": response.text[:200]}
             print(f"Vapi call response: {result}")
         entry = {
             "timestamp": time_module.strftime("%H:%M:%S"),
